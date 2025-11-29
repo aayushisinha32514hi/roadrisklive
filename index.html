@@ -1,0 +1,188 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Road Risk Live (Phone)</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <style>
+    body { margin:0; font-family: Arial, sans-serif; }
+    #map { height: 64vh; }
+    #panel { padding:10px; }
+    .btn { padding:8px 12px; border-radius:6px; border:1px solid #888; background:#fff; margin-right:8px; display:inline-block }
+    #status { margin-top:8px; white-space:pre-line; }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div id="panel">
+  <div>
+    <button id="reportBtn" class="btn">Report my location</button>
+    <button id="startSensorsBtn" class="btn">Start live sensors</button>
+    <button id="stopSensorsBtn" class="btn" style="display:none">Stop sensors</button>
+  </div>
+
+  <div id="status">Waiting for actions...</div>
+  <div id="details" style="margin-top:8px"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+/* ---------- PASTE your firebase config (v8 namespaced) ---------- */
+var firebaseConfig = {
+  apiKey: "AIzaSyA0tYEv8JNnjOFRAShK5kWfuvmr6mW33w0",
+  authDomain: "roadrisklive.firebaseapp.com",
+  databaseURL: "https://roadrisklive-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "roadrisklive",
+  storageBucket: "roadrisklive.firebasestorage.app",
+  messagingSenderId: "986539291256",
+  appId: "1:986539291256:web:ef4f5ab28c214c18af338d"
+};
+firebase.initializeApp(firebaseConfig);
+var db = firebase.database();
+var ref = db.ref("live_area");
+/* ---------------------------------------------------------------- */
+
+var map = L.map('map').setView([28.47,77.50], 15);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+var marker = null;
+
+function showDetails(p){
+  if(!p) { document.getElementById('details').innerText = "No area data"; return; }
+  document.getElementById('details').innerHTML =
+    "<b>Risk Score:</b> " + (p.risk_score||0) + "<br>" +
+    "<b>Acceleration:</b> " + (p.acc||p.acceleration||0) + "<br>" +
+    "<b>Pothole:</b> " + p.pothole + "<br>" +
+    "<b>Rough:</b> " + p.rough + "<br>" +
+    "<b>Visibility:</b> " + (p.visibility||'') + "<br>" +
+    "<b>Timestamp:</b> " + (p.timestamp||'') + "<br>" +
+    "<b>Lat:</b> " + p.lat + " <b>Lon:</b> " + p.lon;
+}
+
+// live listener (keeps map & panel updated)
+ref.on("value", function(snapshot){
+  var d = snapshot.val();
+  if(!d) return;
+  if(marker) map.removeLayer(marker);
+  var color = d.risk_score > 70 ? "red" : d.risk_score > 40 ? "orange" : "green";
+  marker = L.circleMarker([d.lat, d.lon], { radius: 12, color: color, fillOpacity: 0.9 }).addTo(map);
+  map.setView([d.lat,d.lon], 17);
+  showDetails(d);
+}, function(err){ console.error("firebase error",err); });
+
+// ----------------- helpers -----------------
+function computeRisk(acceleration, visibility=5){
+  var pothole = acceleration > 5.0;
+  var rough = acceleration > 3.0;
+  var risk = 0;
+  if(pothole) risk += 50;
+  if(rough) risk += 30;
+  if(visibility < 4) risk += 20;
+  return {risk: Math.round(risk), pothole: pothole, rough: rough};
+}
+
+function pushToFirebase(payload){
+  // simple full replace of live_area for demo
+  ref.set(payload).then(function(){ 
+    document.getElementById('status').innerText = "Last pushed: " + (payload.timestamp||new Date().toISOString());
+  }).catch(function(e){
+    document.getElementById('status').innerText = "Push error: " + e;
+  });
+}
+
+// ----------------- Report my location (one-click) -----------------
+document.getElementById('reportBtn').addEventListener('click', function(){
+  if(!navigator.geolocation){ alert("Geolocation not supported"); return; }
+  document.getElementById('status').innerText = "Getting current GPS...";
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var lat = pos.coords.latitude;
+    var lon = pos.coords.longitude;
+    var ts = new Date().toISOString();
+    // no accelerometer in single click - use 0 as placeholder
+    var acc = 0;
+    var vis = 5;
+    var r = computeRisk(acc, vis);
+    var payload = {
+      lat: lat, lon: lon, acc: acc, pothole: r.pothole, rough: r.rough,
+      visibility: vis, risk_score: r.risk, timestamp: ts
+    };
+    pushToFirebase(payload);
+  }, function(err){
+    alert("GPS error: " + err.message);
+    document.getElementById('status').innerText = "GPS error";
+  }, { enableHighAccuracy:true, maximumAge:2000, timeout:8000 });
+});
+
+// ----------------- Live sensors (continuous) -----------------
+var sensorsRunning = false;
+var motionHandler = null;
+var lastAccel = 0;
+var sensorInterval = null;
+
+async function startSensors(){
+  // DeviceMotion on iOS requires explicit permission
+  try {
+    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+      let perm = await DeviceMotionEvent.requestPermission();
+      if (perm !== 'granted') {
+        alert('Motion permission denied. Accelerometer will not be available.');
+      }
+    }
+  } catch(e){
+    console.log('DeviceMotion request error', e);
+  }
+
+  if(!navigator.geolocation) { alert("Geolocation not supported"); return; }
+
+  sensorsRunning = true;
+  document.getElementById('startSensorsBtn').style.display = 'none';
+  document.getElementById('stopSensorsBtn').style.display = 'inline-block';
+  document.getElementById('status').innerText = "Sensors started. Capturing location + acceleration.";
+
+  // listen for device motion (acceleration)
+  motionHandler = function(ev){
+    // Some browsers give accelerationIncludingGravity or acceleration
+    var a = ev.acceleration || ev.accelerationIncludingGravity || {x:0,y:0,z:0};
+    var ax = a.x || 0, ay = a.y || 0, az = a.z || 0;
+    lastAccel = Math.sqrt(ax*ax + ay*ay + az*az);
+  };
+  window.addEventListener('devicemotion', motionHandler);
+
+  // interval: every 1s, get latest GPS and push combined payload
+  sensorInterval = setInterval(function(){
+    navigator.geolocation.getCurrentPosition(function(pos){
+      var lat = pos.coords.latitude;
+      var lon = pos.coords.longitude;
+      var ts = new Date().toISOString();
+      var acc = Math.round(lastAccel * 10)/10;
+      var vis = 5;
+      var r = computeRisk(acc, vis);
+      var payload = { lat:lat, lon:lon, acc:acc, pothole:r.pothole, rough:r.rough, visibility:vis, risk_score:r.risk, timestamp:ts };
+      pushToFirebase(payload);
+    }, function(err){
+      console.warn("GPS error while running sensors:", err);
+      document.getElementById('status').innerText = "GPS error while sensors running: " + err.message;
+    }, { enableHighAccuracy:true, maximumAge:1000, timeout:5000 });
+  }, 1000);
+}
+
+function stopSensors(){
+  sensorsRunning = false;
+  if(motionHandler) window.removeEventListener('devicemotion', motionHandler);
+  if(sensorInterval) { clearInterval(sensorInterval); sensorInterval = null; }
+  document.getElementById('startSensorsBtn').style.display = 'inline-block';
+  document.getElementById('stopSensorsBtn').style.display = 'none';
+  document.getElementById('status').innerText = "Sensors stopped.";
+}
+
+document.getElementById('startSensorsBtn').addEventListener('click', function(){ startSensors(); });
+document.getElementById('stopSensorsBtn').addEventListener('click', function(){ stopSensors(); });
+
+</script>
+</body>
+</html>
