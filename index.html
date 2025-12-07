@@ -1,250 +1,352 @@
 <!doctype html>
 <html>
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>RoadRiskLive — demo</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RoadRiskLive — demo</title>
 
-<!-- Leaflet -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<style>
-  :root{
-    --card:#ffffff; --muted:#6b7280; --accent:#0b76ef; --success:#168a46;
-    --panel-radius:14px;
-  }
-  html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Roboto,"Helvetica Neue",Arial;}
-  .app{max-width:960px;margin:10px auto;padding:14px;}
-  header{display:flex;gap:12px;align-items:center}
-  .logo{width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,#2DD4BF,#3B82F6);color:white;display:flex;align-items:center;justify-content:center;font-weight:700}
-  h1{margin:0;font-size:20px}
-  .small{color:var(--muted);font-size:13px}
-  #map{height:180px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.08);overflow:hidden;margin-top:12px}
-  .controls{display:flex;gap:8px;flex-wrap:wrap;padding:12px}
-  button{padding:10px 14px;border-radius:10px;border:1px solid #ececec;background:#fff;cursor:pointer}
-  .btn-primary{background:linear-gradient(90deg,#06b6d4,#3b82f6);color:white;border:0}
-  .panel{background:var(--card);border-radius:var(--panel-radius);padding:14px;margin-top:12px;box-shadow:0 6px 18px rgba(0,0,0,.04)}
-  .live-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px dashed #eee}
-  .live-row:last-child{border-bottom:0}
-  .label{color:var(--muted)}
-  .value{font-weight:700}
-  .badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#f3f4f6;font-size:12px}
-  .summary{margin-top:14px}
-  .summary table{width:100%;border-collapse:collapse}
-  .summary th,.summary td{padding:8px;text-align:left;border-bottom:1px solid #f0f0f0}
-  .actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
-  /* mobile-friendly */
-  @media(min-width:900px){ #map{height:300px} }
-</style>
+  <style>
+    :root{
+      --card:#ffffff;
+      --muted:#6b7280;
+      --accent:#0b76ef;
+      --success:#16a34a;
+      --panel-radius:12px;
+    }
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, Roboto, "Helvetica Neue", Arial;}
+    .app{max-width:920px;margin:12px auto;padding:12px;}
+    header{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+    .logo{width:48px;height:48px;border-radius:10px;background:linear-gradient(135deg,#2DD4BF,#3B82F6);display:flex;align-items:center;justify-content:center;color:white;font-weight:700}
+    h1{margin:0;font-size:18px}
+    .small{color:var(--muted);font-size:13px}
+
+    #map{height:170px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.08);overflow:hidden;margin-bottom:12px}
+
+    .controls{display:flex;gap:8px;flex-wrap:wrap;padding:12px 0}
+    button{padding:10px 14px;border-radius:12px;border:1px solid #e6e6e6;background:#fff;cursor:pointer}
+    .btn-primary{background:linear-gradient(90deg,#06b6d4,#3b82f6);color:white;border:0}
+    button:disabled{opacity:.5;cursor:not-allowed}
+
+    .panel{background:var(--card);border-radius:var(--panel-radius);padding:14px;margin-top:12px;box-shadow:0 6px 18px rgba(0,0,0,.04)}
+    .live-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px dashed #eee}
+    .live-row:last-child{border-bottom:0}
+    .label{color:var(--muted)}
+    .value{font-weight:700}
+
+    .summary{margin-top:12px}
+    .summary table{width:100%;border-collapse:collapse}
+    .summary th,.summary td{padding:8px;text-align:left;border-bottom:1px solid #f0f0f0}
+    .badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#f3f4f6;font-size:12px}
+
+    /* responsive */
+    @media(min-width:900px){ #map{height:300px} }
+  </style>
 </head>
+
 <body>
-<div class="app">
-  <header>
-    <div class="logo">R</div>
-    <div>
-      <h1>RoadRiskLive</h1>
-      <div class="small">Realtime road condition & risk monitoring — demo</div>
+  <div class="app">
+    <header>
+      <div class="logo">R</div>
+      <div>
+        <h1>RoadRiskLive</h1>
+        <div class="small">Realtime road condition &amp; risk monitoring — demo</div>
+      </div>
+    </header>
+
+    <div id="map" aria-hidden="false"></div>
+
+    <div class="controls">
+      <button id="reportBtn">📍 Report my location</button>
+      <button id="startBtn" class="btn-primary">▶️ Start live sensors</button>
+      <button id="stopBtn" disabled>⏹ Stop sensors</button>
+      <button id="centerBtn">📌 Center map</button>
+
+      <!-- visibility input for demo -->
+      <label style="display:inline-flex;align-items:center;gap:8px;margin-left:8px">
+        Visibility:
+        <select id="visInput" style="padding:8px;border-radius:8px;margin-left:6px">
+          <option value="5">5 (Good)</option>
+          <option value="4">4</option>
+          <option value="3">3</option>
+          <option value="2">2</option>
+          <option value="1">1 (Poor)</option>
+        </select>
+      </label>
+
+      <button id="simulateBtn" style="margin-left:6px">⚡ Simulate payload</button>
     </div>
-  </header>
 
-  <div id="map" aria-hidden="false"></div>
+    <div class="panel">
+      <div class="small">Live data · Demo</div>
+      <div id="lastPushed" class="small" style="margin-top:8px;color:var(--muted);font-weight:600">Last pushed: —</div>
 
-  <div class="controls">
-    <button id="reportBtn">📍 Report my location</button>
-    <button id="startBtn" class="btn-primary">▶️ Start live sensors</button>
-    <button id="stopBtn" disabled>⏹ Stop sensors</button>
-    <button id="centerBtn">📌 Center map</button>
-    <!-- quick simulate button (for testing UI without sensors) -->
-    <button id="simulateBtn">⚡ Simulate payload</button>
+      <div style="margin-top:12px">
+        <div class="live-row"><div class="label">Risk Score</div><div id="risk" class="value">—</div></div>
+        <div class="live-row"><div class="label">Acceleration</div><div id="acc" class="value">—</div></div>
+        <div class="live-row"><div class="label">Pothole</div><div id="pothole" class="value">—</div></div>
+        <div class="live-row"><div class="label">Rough</div><div id="rough" class="value">—</div></div>
+        <div class="live-row"><div class="label">Visibility</div><div id="vis" class="value">—</div></div>
+        <div class="live-row"><div class="label">Timestamp</div><div id="ts" class="value">—</div></div>
+        <div class="live-row"><div class="label">Lat</div><div id="lat" class="value">—</div></div>
+        <div class="live-row"><div class="label">Lon</div><div id="lon" class="value">—</div></div>
+      </div>
+
+      <div class="summary">
+        <div class="small">Quick interpretation</div>
+        <table>
+          <tr><th>Metric</th><th>Meaning / Notes</th></tr>
+          <tr><td>Risk Score</td><td class="value">Higher = more dangerous (0 = safe)</td></tr>
+          <tr><td>Acceleration</td><td class="value">High ≈ bump/impact</td></tr>
+          <tr><td>Pothole</td><td class="value">Yes = detected (impact spike)</td></tr>
+          <tr><td>Rough</td><td class="value">Yes = sustained rough surface</td></tr>
+          <tr><td>Visibility</td><td class="value">1 (low) → 5 (good) (manually set)</td></tr>
+        </table>
+      </div>
+    </div>
   </div>
 
-  <div class="panel">
-    <div class="small">Live data · Demo</div>
-    <div id="lastPushed" class="small" style="margin-top:8px">Last pushed: —</div>
+  <script>
+  /* --------------- FULL DEMO SCRIPT ---------------
+     Single-file demo. Works offline for UI and map.
+     DeviceMotion requires user gesture (Start live sensors).
+     Geolocation requests permission and works over HTTPS.
+  -------------------------------------------------*/
 
-    <div style="margin-top:12px">
-      <div class="live-row"><div class="label">Risk Score</div><div id="risk" class="value">—</div></div>
-      <div class="live-row"><div class="label">Acceleration</div><div id="acc" class="value">—</div></div>
-      <div class="live-row"><div class="label">Pothole</div><div id="pothole" class="value">—</div></div>
-      <div class="live-row"><div class="label">Rough</div><div id="rough" class="value">—</div></div>
-      <div class="live-row"><div class="label">Visibility</div><div id="vis" class="value">—</div></div>
-      <div class="live-row"><div class="label">Timestamp</div><div id="ts" class="value">—</div></div>
-      <div class="live-row"><div class="label">Lat</div><div id="lat" class="value">—</div></div>
-      <div class="live-row"><div class="label">Lon</div><div id="lon" class="value">—</div></div>
-    </div>
+  console.log('[RR] demo script loaded');
 
-    <div class="summary">
-      <div class="small">Quick interpretation</div>
-      <table>
-        <tr><th>Metric</th><th>Meaning / Notes</th></tr>
-        <tr><td>Risk Score</td><td>0 = safe (higher = more risk)</td></tr>
-        <tr><td>Acceleration</td><td>High ≈ bump/impact</td></tr>
-        <tr><td>Pothole</td><td>Counts potholes reported: Yes / No</td></tr>
-        <tr><td>Rough</td><td>Surface roughness flag: Yes / No</td></tr>
-        <tr><td>Visibility</td><td>1 (low) → 5 (good)</td></tr>
-      </table>
-    </div>
-  </div>
-</div>
+  const el = id => document.getElementById(id);
 
-<script>
-/* --------- helper & debug --------- */
-console.log('[RR] index.html loaded');
+  // --- init map & marker
+  const DEFAULT = { lat: 28.45006, lon: 77.58585 }; // Noida demo
+  let map = L.map('map', { zoomControl: true }).setView([DEFAULT.lat, DEFAULT.lon], 15);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19, attribution: '©️ OpenStreetMap'
+  }).addTo(map);
+  let marker = L.circleMarker([DEFAULT.lat, DEFAULT.lon], { radius: 10, color:'#168a46', fillColor:'#168a46', fillOpacity:1 }).addTo(map);
+  marker.bindPopup('No data yet');
 
-const el = id => document.getElementById(id);
-const setText = (id, txt) => { const e = el(id); if(e) e.innerText = (txt===undefined||txt===null)?'—':txt; };
+  // UI helpers
+  const setText = (id, t) => { const e = el(id); if(e) e.innerText = t; };
 
-/* --------- init map + marker --------- */
-let map = L.map('map',{ zoomControl:true }).setView([28.45006,77.58585], 15);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'©️ OpenStreetMap' }).addTo(map);
-let marker = L.circleMarker([28.45006,77.58585], { radius:10, color: '#168a46', fillColor:'#168a46', fillOpacity:1 }).addTo(map);
+  // sensor handling
+  let motionHandler = null;
+  let sensorsRunning = false;
+  let geoInterval = null;
 
-/* --------- UI updater (single place to call) --------- */
-function updateUIFromPayload(p){
-  // p: { timestamp, lat, lon, acceleration, pothole, rough, visibility, risk }
-  setText('risk', p.risk ?? '—');
-  // acceleration numeric -> show numeric (or dash)
-  setText('acc', (p.acceleration === undefined || p.acceleration === null) ? '—' : String(Number(p.acceleration).toFixed(2)));
-  // boolean fields -> Yes / No
-  setText('pothole', (p.pothole === undefined || p.pothole === null) ? '—' : (p.pothole ? 'Yes' : 'No'));
-  setText('rough', (p.rough === undefined || p.rough === null) ? '—' : (p.rough ? 'Yes' : 'No'));
-  setText('vis', (p.visibility === undefined || p.visibility === null) ? '—' : (p.visibility));
-  setText('ts', p.timestamp ?? '—');
-  setText('lat', (p.lat === undefined || p.lat === null) ? '—' : (Number(p.lat).toFixed(6)));
-  setText('lon', (p.lon === undefined || p.lon === null) ? '—' : (Number(p.lon).toFixed(6)));
-  // update marker if lat/lon exist
-  if(p.lat !== undefined && p.lon !== undefined && p.lat !== null && p.lon !== null){
-    try{ marker.setLatLng([Number(p.lat), Number(p.lon)]); map.setView([Number(p.lat), Number(p.lon)], 16); } catch(e){ console.warn('[RR] marker update failed', e); }
-  }
-  // last pushed
-  setText('lastPushed', p.timestamp ?? new Date().toISOString());
-  // store last payload in window for debug
-  window.__lastPayload = p;
-}
+  // acceleration rolling buffer
+  const ACC_BUFFER_LEN = 6;
+  let accBuffer = [];
 
-/* --------- sensors handling --------- */
-let motionHandler = null;
-let sensorsRunning = false;
-
-function setButtonsRunning(r){
-  sensorsRunning = r;
-  el('startBtn').disabled = r;
-  el('stopBtn').disabled = !r;
-}
-
-async function startLiveSensors(){
-  console.log('[RR] startLiveSensors called');
-  setButtonsRunning(true);
-  setText('lastPushed', 'Getting sensors...');
-
-  // Request device motion permission on iOS (must be via gesture)
-  if(typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function'){
-    try{
-      const perm = await DeviceMotionEvent.requestPermission();
-      console.log('[RR] DeviceMotion permission:', perm);
-      if(perm !== 'granted'){ alert('Motion permission not granted — motion data disabled'); }
-    } catch(e){ console.warn('[RR] DeviceMotion request error', e); }
+  function setButtonsRunning(r){
+    sensorsRunning = r;
+    el('startBtn').disabled = r;
+    el('stopBtn').disabled = !r;
   }
 
-  // attach motion handler (best-effort)
-  motionHandler = (ev) => {
-    try{
-      const ax = (ev.acceleration?.x ?? ev.accelerationIncludingGravity?.x) ?? 0;
-      const ay = (ev.acceleration?.y ?? ev.accelerationIncludingGravity?.y) ?? 0;
-      const az = (ev.acceleration?.z ?? ev.accelerationIncludingGravity?.z) ?? 0;
-      const acc = Math.sqrt(ax*ax + ay*ay + az*az);
-      // update only acceleration field so UI becomes responsive
-      updateUIFromPayload({ acceleration: Number(acc.toFixed(2)), timestamp: new Date().toISOString() , lat: window.__lastPayload?.lat, lon: window.__lastPayload?.lon });
-      console.log('[RR] motion acc=', acc);
-    } catch(e){ console.warn('[RR] motion handler error', e); }
-  };
-  try{ window.addEventListener('devicemotion', motionHandler); } catch(e){ console.warn('[RR] addEventListener devicemotion failed', e); }
+  // utility: set multiple fields from payload
+  function updateUIFromPayload(p){
+    // p = { timestamp, lat, lon, acceleration, pothole, rough, visibility, risk }
+    setText('risk', (p.risk !== undefined) ? p.risk.toFixed(0) : '—');
+    setText('acc', (p.acceleration !== undefined) ? Number(p.acceleration).toFixed(2) : '—');
+    setText('pothole', (p.pothole ? 'Yes' : (p.pothole===false ? 'No' : '—')));
+    setText('rough', (p.rough ? 'Yes' : (p.rough===false ? 'No' : '—')));
+    setText('vis', (p.visibility !== undefined) ? p.visibility : '—');
+    setText('ts', p.timestamp ?? '—');
+    setText('lat', (p.lat !== undefined) ? (Number(p.lat).toFixed(6)) : '—');
+    setText('lon', (p.lon !== undefined) ? (Number(p.lon).toFixed(6)) : '—');
+  }
 
-  // then get geolocation once (and show a simulated payload to show all UI elements)
-  if(!navigator.geolocation){
-    alert('Geolocation not supported in this browser');
-    setText('lastPushed','No geolocation');
+  // Risk calculation described in the explanation:
+  function computeRisk({acceleration=0, pothole=false, rough=false, visibility=5}){
+    // acceleration contribution
+    let accPart = Math.min(40, acceleration * 10); // scaled
+    let potholePart = pothole ? 30 : 0;
+    let roughPart = rough ? 20 : 0;
+    const visPenalty = {5:0,4:2,3:4,2:6,1:8}[visibility] ?? 0;
+    let risk = accPart + potholePart + roughPart + visPenalty;
+    if(risk < 0) risk = 0;
+    if(risk > 100) risk = 100;
+    return Math.round(risk);
+  }
+
+  // Determine pothole: acceleration spike threshold
+  const POTHOLE_THRESHOLD = 2.5; // m/s^2 — tweak if needed
+  const ROUGH_AVG_THRESHOLD = 1.0; // average accel over buffer
+
+  function analyzeAcceleration(accVal){
+    // push to buffer
+    accBuffer.push(accVal);
+    if(accBuffer.length > ACC_BUFFER_LEN) accBuffer.shift();
+    // compute rolling average
+    const avg = accBuffer.length ? (accBuffer.reduce((a,b)=>a+b,0)/accBuffer.length) : 0;
+    // pothole if current acc spike > threshold
+    const pothole = (accVal >= POTHOLE_THRESHOLD);
+    const rough = (avg >= ROUGH_AVG_THRESHOLD);
+    return {acc:accVal, avg, pothole, rough};
+  }
+
+  // Start live sensors
+  async function startLiveSensors(){
+    console.log('[RR] startLiveSensors called');
+    setButtonsRunning(true);
+    setText('lastPushed','Getting sensors...');
+    // ask for iOS DeviceMotion permission if required
+    try {
+      if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+        const perm = await DeviceMotionEvent.requestPermission();
+        console.log('[RR] DeviceMotion permission:', perm);
+        if (perm !== 'granted') {
+          alert('Motion permission not granted — motion data will be disabled.');
+        }
+      }
+    } catch(e){
+      console.warn('[RR] DeviceMotion request error', e);
+    }
+
+    // attach motion handler (best-effort)
+    motionHandler = (ev) => {
+      try {
+        const ax = (ev.acceleration?.x ?? ev.accelerationIncludingGravity?.x ?? 0);
+        const ay = (ev.acceleration?.y ?? ev.accelerationIncludingGravity?.y ?? 0);
+        const az = (ev.acceleration?.z ?? ev.accelerationIncludingGravity?.z ?? 0);
+        const acc = Math.sqrt(ax*ax + ay*ay + az*az);
+        // update accel UI quickly
+        const analysis = analyzeAcceleration(Number(acc));
+        // read visibility selection
+        const visibility = Number(el('visInput').value);
+        // compute risk (we will not include DB here)
+        const risk = computeRisk({acceleration: analysis.acc, pothole: analysis.pothole, rough: analysis.rough, visibility});
+        // quick UI update
+        updateUIFromPayload({
+          acceleration: Number(analysis.acc).toFixed(2),
+          pothole: analysis.pothole,
+          rough: analysis.rough,
+          visibility,
+          risk,
+          timestamp: new Date().toISOString(),
+          lat: parseFloat(el('lat').innerText) || DEFAULT.lat,
+          lon: parseFloat(el('lon').innerText) || DEFAULT.lon,
+        });
+        // update marker popup
+        marker.setPopupContent(`Risk: ${risk} • Acc: ${Number(analysis.acc).toFixed(2)}`).openPopup();
+      } catch(err){ console.warn('[RR] motion handler error', err); }
+    };
+    window.addEventListener('devicemotion', motionHandler);
+
+    // get geolocation once and then poll periodically
+    if (!navigator.geolocation){
+      alert('Geolocation not supported in this browser');
+      setText('lastPushed','No geolocation');
+      return;
+    }
+
+    // small helper to get position and update UI + marker
+    function doGeoOnce(){
+      navigator.geolocation.getCurrentPosition((pos) => {
+        const lat = pos.coords.latitude, lon = pos.coords.longitude;
+        console.log('[RR] got geo', lat, lon);
+        marker.setLatLng([lat, lon]);
+        map.setView([lat, lon], 16);
+        // simulate payload to update UI fields (acceleration will come from motion)
+        const payload = {
+          timestamp: new Date().toISOString(),
+          lat, lon,
+          acceleration: Number(el('acc').innerText) ? Number(el('acc').innerText) : 0,
+          pothole: (el('pothole').innerText === 'Yes'),
+          rough: (el('rough').innerText === 'Yes'),
+          visibility: Number(el('visInput').value),
+          risk: Number(el('risk').innerText) || 0
+        };
+        updateUIFromPayload(payload);
+        setText('lastPushed','Live: ' + payload.timestamp);
+      }, (err) => {
+        console.warn('[RR] geolocation error', err);
+        setText('lastPushed','Geo error: ' + (err.message || err.code));
+      }, { enableHighAccuracy:true, timeout:10000, maximumAge:10000});
+    }
+
+    // run once, then poll every 2s
+    doGeoOnce();
+    if(geoInterval) clearInterval(geoInterval);
+    geoInterval = setInterval(doGeoOnce, 2000);
+  }
+
+  function stopLiveSensors(){
+    console.log('[RR] stopLiveSensors called');
+    if (motionHandler) window.removeEventListener('devicemotion', motionHandler);
+    motionHandler = null;
+    if (geoInterval) { clearInterval(geoInterval); geoInterval = null; }
     setButtonsRunning(false);
-    return;
+    setText('lastPushed','Stopped');
   }
 
-  navigator.geolocation.getCurrentPosition((pos) => {
-    const lat = pos.coords.latitude, lon = pos.coords.longitude;
-    console.log('[RR] got geo', lat, lon);
-    // construct demo payload (you can replace this part to push to DB later)
+  // get geolocation and update UI (Report my location)
+  function reportMyLocation(){
+    console.log('[RR] reportMyLocation() called');
+    if (!navigator.geolocation){ alert('No geolocation'); return; }
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const lat = pos.coords.latitude, lon = pos.coords.longitude;
+      const payload = { timestamp: new Date().toISOString(), lat, lon };
+      marker.setLatLng([lat, lon]); map.setView([lat, lon], 16);
+      updateUIFromPayload({ timestamp: payload.timestamp, lat, lon, visibility: Number(el('visInput').value) });
+      setText('lastPushed','Reported location: ' + payload.timestamp);
+      console.log('[RR] reported payload (demo only)', payload);
+    }, (err) => {
+      console.warn('[RR] report geo error', err);
+      alert('Location failed: ' + (err.message || err.code));
+    });
+  }
+
+  // center map on last known lat/lon in UI
+  function centerMap(){
+    console.log('[RR] centerMap()');
+    const lat = parseFloat(el('lat').innerText) || DEFAULT.lat;
+    const lon = parseFloat(el('lon').innerText) || DEFAULT.lon;
+    map.setView([lat, lon], 16);
+  }
+
+  // Simulate payload (useful for demo without motion sensors)
+  function simulatePayload(){
+    // create a small random acceleration pattern
+    const acc = (Math.random() * 2.5).toFixed(2);
+    // push to buffer so rough detection works
+    analyzeAcceleration(Number(acc));
+    const visibility = Number(el('visInput').value);
+    const pothole = (Number(acc) >= POTHOLE_THRESHOLD);
+    const rough = (accBuffer.reduce((a,b)=>a+b,0)/accBuffer.length) >= ROUGH_AVG_THRESHOLD;
+    const risk = computeRisk({acceleration:Number(acc), pothole, rough, visibility});
+    // fake a location slightly jittered from current marker
+    const cur = marker.getLatLng();
+    const lat = cur.lat + (Math.random()-0.5)*0.0003;
+    const lon = cur.lng + (Math.random()-0.5)*0.0003;
+    marker.setLatLng([lat, lon]);
+    map.setView([lat, lon], 16);
     const payload = {
       timestamp: new Date().toISOString(),
       lat, lon,
-      acceleration: window.__lastPayload?.acceleration ?? 0,
-      pothole: false,
-      rough: false,
-      visibility: 5,
-      risk: 0
+      acceleration: Number(acc),
+      pothole, rough, visibility, risk
     };
     updateUIFromPayload(payload);
-    setText('lastPushed','Live (last update shown below)');
-  }, (err) => {
-    console.warn('[RR] geolocation error', err);
-    setText('lastPushed','Geo error: ' + (err.message || err.code || 'unknown'));
-    setButtonsRunning(false);
-  }, { enableHighAccuracy:true, timeout:10000, maximumAge:10000 });
-}
+    setText('lastPushed','Simulated push at ' + payload.timestamp);
+    marker.setPopupContent(`Risk: ${risk} • Acc: ${Number(acc).toFixed(2)}`).openPopup();
+    console.log('[RR] simulated payload', payload);
+  }
 
-function stopLiveSensors(){
-  console.log('[RR] stopLiveSensors called');
-  if(motionHandler) window.removeEventListener('devicemotion', motionHandler);
-  motionHandler = null;
-  setButtonsRunning(false);
-  setText('lastPushed','Stopped');
-}
+  // Wire buttons
+  el('startBtn').addEventListener('click', startLiveSensors);
+  el('stopBtn').addEventListener('click', stopLiveSensors);
+  el('reportBtn').addEventListener('click', reportMyLocation);
+  el('centerBtn').addEventListener('click', centerMap);
+  el('simulateBtn').addEventListener('click', simulatePayload);
 
-/* Report current device location (on button press) */
-function reportMyLocation(){
-  console.log('[RR] reportMyLocation() called');
-  if(!navigator.geolocation){ alert('No geolocation'); return; }
-  navigator.geolocation.getCurrentPosition((pos)=>{
-    const lat = pos.coords.latitude, lon = pos.coords.longitude;
-    const payload = { timestamp: new Date().toISOString(), lat, lon, acceleration: window.__lastPayload?.acceleration ?? 0, pothole:false, rough:false, visibility:5, risk:0 };
-    // update UI only (demo)
-    updateUIFromPayload(payload);
-    console.log('[RR] reported payload (demo only)', payload);
-  }, (err) => { console.warn('[RR] report geo error', err); alert('Location failed: ' + (err.message||err.code)); }, { enableHighAccuracy:true, timeout:10000 });
-}
-
-function centerMap(){
-  console.log('[RR] centerMap()');
-  const lat = parseFloat(el('lat').innerText) || 28.45006;
-  const lon = parseFloat(el('lon').innerText) || 77.58585;
-  map.setView([lat,lon], 16);
-}
-
-/* --------- debug: wrap original functions so logs appear in console if we override later --------- */
-console.log('[RR] hooking buttons & UI');
-el('startBtn').addEventListener('click', startLiveSensors);
-el('stopBtn').addEventListener('click', stopLiveSensors);
-el('reportBtn').addEventListener('click', reportMyLocation);
-el('centerBtn').addEventListener('click', centerMap);
-
-/* Simulate button — helpful to test UI quickly */
-el('simulateBtn').addEventListener('click', ()=> {
-  const fake = {
-    timestamp: new Date().toISOString(),
-    lat: 28.45006 + (Math.random()-0.5)/1000,
-    lon: 77.58585 + (Math.random()-0.5)/1000,
-    acceleration: Number((Math.random()*1.5).toFixed(2)),
-    pothole: Math.random() > 0.75,
-    rough: Math.random() > 0.6,
-    visibility: Math.ceil(Math.random()*5),
-    risk: Math.floor(Math.random()*30)
-  };
-  console.log('[RR] simulate payload ->', fake);
-  updateUIFromPayload(fake);
-});
-
-/* initial UI */
-setText('lastPushed','—');
-console.log('[RR] demo UI wired - ready.');
-</script>
+  // initial UI
+  setText('lastPushed','—');
+  console.log('[RR] demo UI wired - ready.');
+  </script>
 </body>
 </html>
