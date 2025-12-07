@@ -1,13 +1,12 @@
 # real_time_push.py
 # Simple Python script that reads the last row of live_sensor.csv
 # and pushes a small JSON object to a Realtime DB via REST.
-# (We'll set the real DATABASE_URL later when you create Firebase.)
 
 import csv
 import time
 import requests
 
-# --- EDIT THIS LATER with your Firebase realtime DB URL ---
+
 DATABASE_URL = "https://roadrisklive-default-rtdb.asia-southeast1.firebasedatabase.app"
 NODE = "live_area"
 

@@ -3,297 +3,386 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>RoadRiskLive — Demo</title>
+  <title>RoadRiskLive — demo</title>
 
-  <!-- Google font (for nicer UI) -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-sA+eP6qk0gh5Y0gG2G0bZf9e6Rkq6Q7p3yX0p6pPq0M=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-XQoYMqMTK8LvdxXYG3n2ZYQ2EN5h3v2x7Z8A6M5m9g0=" crossorigin=""></script>
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <style>
-    :root{
-      --bg: #f7f7fb;
-      --card: #ffffff;
+    /* base */
+    :root {
+      --card-bg: #ffffff;
       --muted: #6b7280;
       --accent: #0b76ef;
-      --accent-2: #00a86b;
-      --danger: #e53e3e;
-      --radius: 12px;
-      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      --success: #16a34a;
+      --warning: #f59e0b;
+      --danger:  #ef4444;
+      --panel-radius: 12px;
     }
+    html,body{ height:100%; margin:0; font-family: Inter, system-ui, -apple-system, Roboto, "Helvetica Neue", Arial; background:#f6f7fb; color:#0f172a; }
+    .app { max-width:900px; margin:12px auto; padding:12px; }
 
-    html,body{height:100%; margin:0; background:var(--bg); color:#111;}
-    .topbar{
-      display:flex; align-items:center; gap:12px;
-      padding:12px 14px; background:linear-gradient(90deg,#fff,#fafbff);
-      border-bottom:1px solid rgba(0,0,0,0.04);
-    }
-    .brand{
+    /* header */
+    .header {
       display:flex; gap:12px; align-items:center;
     }
-    .logo{
-      height:38px; width:38px; border-radius:10px; background:linear-gradient(135deg,#0b76ef,#00a86b);
-      display:flex; align-items:center; justify-content:center; color:white; font-weight:700;
-      box-shadow:0 4px 14px rgba(11,118,239,0.12);
+    .brand {
+      display:flex; gap:12px; align-items:center;
     }
-    .title{ font-weight:600; font-size:16px; }
-    .subtitle{ font-size:12px; color:var(--muted); margin-top:-4px; }
-
-    /* container */
-    .container{ display:flex; flex-direction:column; height:calc(100% - 62px); gap:10px; padding:10px; box-sizing:border-box; }
+    .logo {
+      width:42px; height:42px; border-radius:10px;
+      display:grid; place-items:center; font-weight:700; color:white;
+      background: linear-gradient(135deg,#0b76ef,#06b6d4);
+      box-shadow: 0 6px 18px rgba(11,118,239,0.12);
+    }
+    .title { font-size:18px; font-weight:700; }
+    .subtitle { font-size:13px; color:var(--muted); margin-top:2px; }
 
     /* map */
-    #map { height:56vh; border-radius:10px; box-shadow:0 6px 18px rgba(12,24,56,0.06); border:1px solid rgba(0,0,0,0.03); }
-
-    /* control panel */
-    .panel{
-      margin-top:6px; display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap;
-    }
-    .left, .right { background:var(--card); padding:12px; border-radius:12px; box-shadow:0 6px 18px rgba(12,24,56,0.04); }
-    .left { flex:1; min-width:200px; }
-    .right { width:340px; min-width:220px; }
-
-    /* buttons */
-    .controls { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
-    .btn {
-      background:white; border:1px solid rgba(0,0,0,0.08); padding:8px 12px; border-radius:10px; cursor:pointer;
-      display:inline-flex; align-items:center; gap:8px; font-weight:600; color:#111;
-    }
-    .btn.primary { background:var(--accent); color:white; border:0; box-shadow:0 6px 18px rgba(11,118,239,0.12); }
-    .btn.ghost { background:#fff; }
-    .btn.danger { background:var(--danger); color:white; border:0; }
-
-    /* details */
-    .details { font-size:15px; color:#111; line-height:1.5; }
-    .details b { color:#111; }
-    .muted { color:var(--muted); font-size:13px; margin-top:6px; }
-
-    /* center button small */
-    #centerBtn { padding:6px 10px; font-size:13px; }
-
-    /* responsive */
-    @media (max-width:720px){
-      .container{ padding:8px; }
-      #map{ height:60vh; }
-      .panel{ flex-direction:column; }
-      .right{ width:100%; }
+    #map { width:100%; height:42vh; min-height:260px; border-radius:12px; overflow:hidden; margin-top:12px; box-shadow: 0 8px 20px rgba(2,6,23,0.06); }
+    .map-top-badge {
+      position: absolute; z-index: 1000; right: 18px; top: 22px;
+      background:rgba(255,255,255,0.95); border-radius:8px; padding:6px 10px;
+      box-shadow:0 6px 16px rgba(2,6,23,0.08); font-size:13px;
     }
 
+    /* controls */
+    .controls { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; align-items:center; }
+    button { padding:10px 14px; border-radius:10px; border:1px solid #e6e9ef; background:white; cursor:pointer; font-weight:600; }
+    button:active{ transform:translateY(1px); }
+    .btn-primary { background: linear-gradient(90deg,#0b76ef,#06b6d4); color:white; border:none; box-shadow: 0 8px 18px rgba(11,118,239,0.12); }
+    .btn-ghost { background:transparent; color:var(--muted); border:1px dashed #e6e9ef; }
+
+    /* cards */
+    .row { display:flex; gap:14px; margin-top:14px; flex-wrap:wrap; }
+    .data-card{
+      flex:1 1 320px;
+      background:var(--card-bg);
+      padding:14px; border-radius:var(--panel-radius);
+      box-shadow:0 8px 24px rgba(2,6,23,0.06);
+      border-left:6px solid var(--accent);
+    }
+    .section-title{ font-size:14px; font-weight:700; margin-bottom:8px; }
+    .muted { color:var(--muted); font-size:13px; margin-bottom:8px; }
+
+    /* list */
+    .stat { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #f1f3f6; align-items:center; }
+    .stat:last-child{ border-bottom:0; }
+    .stat-key{ color:#374151; font-weight:600; }
+    .stat-value{ color:#111827; font-weight:700; }
+
+    /* pill/badge */
+    .badge { padding:6px 8px; border-radius:999px; font-weight:700; color:white; font-size:13px; display:inline-block; }
+    .badge.low{ background:var(--success); }
+    .badge.medium{ background:var(--warning); color:#111827; }
+    .badge.high{ background:var(--danger); }
+
+    /* summary table */
+    table.summary{ width:100%; border-collapse:collapse; margin-top:6px; font-size:14px; }
+    table.summary td, table.summary th { padding:8px 6px; border-bottom:1px solid #f3f4f6; }
+    table.summary th{ text-align:left; color:#374151; font-weight:700; font-size:13px; }
+    table.summary td{ color:#111827; }
+
+    /* tiny helpers */
+    .icon { margin-right:8px; }
+    .small-muted { font-size:13px; color:var(--muted); }
+    .center { text-align:center; }
+    @media (max-width:520px){
+      .data-card{ flex-basis:100%; }
+    }
   </style>
 </head>
 <body>
-  <div class="topbar">
-    <div class="brand">
-      <div class="logo">R</div>
-      <div>
-        <div class="title">RoadRiskLive</div>
-        <div class="subtitle">Real-time road condition & risk monitoring</div>
+  <div class="app">
+    <div class="header">
+      <div class="brand">
+        <div class="logo">R</div>
+        <div>
+          <div class="title">RoadRiskLive</div>
+          <div class="subtitle">Realtime road condition & risk monitoring</div>
+        </div>
       </div>
     </div>
-    <div style="margin-left:auto; color:var(--muted); font-size:13px;">Demo • Live</div>
-  </div>
 
-  <div class="container">
     <div id="map"></div>
 
-    <div class="panel">
-      <div class="left">
-        <div class="controls">
-          <button id="reportBtn" class="btn"><span>📍</span> Report my location</button>
-          <button id="startSensorsBtn" class="btn primary">▶️ Start live sensors</button>
-          <button id="stopSensorsBtn" class="btn" style="display:none">⏹ Stop sensors</button>
-          <button id="centerBtn" class="btn ghost" title="Center map to marker">📌 Center map</button>
+    <div class="map-top-badge small-muted" id="mapBadge">Status: <span id="mapStatus">Idle</span></div>
+
+    <div class="controls">
+      <button id="reportBtn">📍 Report my location</button>
+      <button id="startBtn" class="btn-primary">▶️ Start live sensors</button>
+      <button id="stopBtn" disabled>⏹ Stop sensors</button>
+      <button id="centerBtn" class="btn-ghost">📌 Center map</button>
+    </div>
+
+    <div class="row">
+      <!-- Live data card -->
+      <div class="data-card" id="liveCard">
+        <div class="section-title">Live data</div>
+        <div class="muted">Realtime • Firebase</div>
+
+        <div id="lastPushed" class="small-muted">Last pushed: —</div>
+
+        <div style="margin-top:10px">
+          <div class="stat"><div class="stat-key">Risk Score</div><div class="stat-value" id="riskBadge">—</div></div>
+          <div class="stat"><div class="stat-key">Acceleration</div><div class="stat-value" id="acc">—</div></div>
+          <div class="stat"><div class="stat-key">Pothole</div><div class="stat-value" id="pothole">—</div></div>
+          <div class="stat"><div class="stat-key">Rough</div><div class="stat-value" id="rough">—</div></div>
+          <div class="stat"><div class="stat-key">Visibility</div><div class="stat-value" id="vis">—</div></div>
+          <div class="stat"><div class="stat-key">Timestamp</div><div class="stat-value" id="ts">—</div></div>
+          <div class="stat"><div class="stat-key">Lat / Lon</div><div class="stat-value small-muted" id="latlon">—</div></div>
         </div>
-
-        <div class="muted">Status</div>
-        <div id="status" style="margin-top:6px; font-weight:600;">Waiting for action…</div>
-
-        <div style="height:8px"></div>
-
-        <div class="muted">Controls</div>
-        <div class="muted" style="margin-top:6px">Tap <b>Start live sensors</b> then allow location and motion on your phone.</div>
       </div>
 
-      <div class="right">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <div style="font-weight:700">Live data</div>
-          <div style="color:var(--muted); font-size:13px">Realtime • Firebase</div>
-        </div>
+      <!-- Summary table card -->
+      <div class="data-card" id="summaryCard">
+        <div class="section-title">Summary</div>
+        <div class="muted">Quick interpretation</div>
 
-        <div class="details" id="details">
-          No data yet — use <b>Report my location</b> to send a quick location.
-        </div>
+        <table class="summary">
+          <thead>
+            <tr><th>Metric</th><th class="center">Meaning / Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Risk Score</td><td class="center" id="summary-risk">0 = safe</td></tr>
+            <tr><td>Acceleration</td><td class="center" id="summary-acc">High ≈ bump/impact</td></tr>
+            <tr><td>Pothole</td><td class="center" id="summary-pothole">Counts potholes reported: <span id="summary-pothole-val">No</span></td></tr>
+            <tr><td>Rough</td><td class="center" id="summary-rough">Surface roughness flag: <span id="summary-rough-val">No</span></td></tr>
+            <tr><td>Visibility</td><td class="center" id="summary-vis">1 (low) → 5 (good)</td></tr>
+          </tbody>
+        </table>
 
-        <div style="height:8px"></div>
-        <div class="muted">Last pushed</div>
-        <div id="lastPushed" style="font-weight:600; margin-top:6px;">—</div>
+        <div style="margin-top:12px; font-size:13px;" class="small-muted">
+          Click <strong>Report my location</strong> to update DB with your current device GPS (works only if DB allows writes).
+        </div>
       </div>
     </div>
   </div>
 
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
   <script>
-  // --------- FIREBASE CONFIG (v8 namespaced) ----------
-  var firebaseConfig = {
-    apiKey: "AIzaSyA0tYEv8JNnjOFRAShK5kWfuvmr6mW33w0",
-    authDomain: "roadrisklive.firebaseapp.com",
-    databaseURL: "https://roadrisklive-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "roadrisklive",
-    storageBucket: "roadrisklive.firebasestorage.app",
-    messagingSenderId: "986539291256",
-    appId: "1:986539291256:web:ef4f5ab28c214c18af338d"
-  };
-  firebase.initializeApp(firebaseConfig);
-  var db = firebase.database();
-  var ref = db.ref("live_area");
+  /******************************************************************
+   *  RoadRiskLive front-end
+   *  - Polls Firebase Realtime DB node and updates map/UI
+   *  - Replace DATABASE_URL if yours differs
+   ******************************************************************/
+  const DATABASE_URL = 'https://roadrisklive-default-rtdb.asia-southeast1.firebasedatabase.app';
+  const NODE = 'live_area'; // keep as in your project
+  const POLL_MS = 2000;     // poll DB every 2s
 
-  // --------- MAP SETUP ----------
-  var map = L.map('map').setView([28.47,77.50], 15);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
-  var marker = null;
-
-  function showDetails(p){
-    if(!p) { document.getElementById('details').innerText = "No area data"; return; }
-    var html =
-      "<b>Risk Score:</b> " + (p.risk_score||0) + "<br>" +
-      "<b>Acceleration:</b> " + (p.acc||p.acceleration||0) + "<br>" +
-      "<b>Pothole:</b> " + p.pothole + "<br>" +
-      "<b>Rough:</b> " + p.rough + "<br>" +
-      "<b>Visibility:</b> " + (p.visibility||'') + "<br>" +
-      "<b>Timestamp:</b> " + (p.timestamp||'') + "<br>" +
-      "<b>Lat:</b> " + (p.lat||'') + " <b>Lon:</b> " + (p.lon||'');
-    document.getElementById('details').innerHTML = html;
+  // helpers
+  const el = id => document.getElementById(id);
+  function yesNo(v){ return (v === true || v === "true" || v === "True") ? 'Yes' : 'No'; }
+  function safeNumber(v){ return (v === undefined || v === null || v === '') ? '—' : v; }
+  function riskBadgeEl(score){
+    const n = Number(score);
+    if(isNaN(n)) return '<span style="color:#6b7280">—</span>';
+    if(n >= 71) return `<span class="badge high">High (${n})</span>`;
+    if(n >= 41) return `<span class="badge medium">Medium (${n})</span>`;
+    return `<span class="badge low">Low (${n})</span>`;
   }
 
-  // Live listener — update marker and details only (NO auto-recenter)
-  ref.on("value", function(snapshot){
-    var d = snapshot.val();
-    if(!d) return;
-    // remove previous marker
-    if(marker) map.removeLayer(marker);
+  // Map init
+  const map = L.map('map', { zoomControl: false }).setView([28.45, 77.585], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19, attribution: '©️ OpenStreetMap'
+  }).addTo(map);
 
-    // color by risk (still simple: green for now)
-    var color = d.risk_score > 70 ? "red" : d.risk_score > 40 ? "orange" : "green";
-    marker = L.circleMarker([d.lat, d.lon], { radius: 12, color: color, fillOpacity: 0.9 }).addTo(map);
-
-    // small popup for quick info
-    marker.bindPopup("Risk: " + (d.risk_score||0) + " • Acc: " + (d.acc||0)).openPopup();
-
-    // show details panel
-    showDetails(d);
-
-    // update last pushed
-    document.getElementById('lastPushed').innerText = d.timestamp || new Date().toISOString();
-    document.getElementById('status').innerText = "LIVE (last update shown below)";
-  }, function(err){ console.error("firebase error",err); });
-
-  // ---------- helpers ----------
-  function computeRisk(acceleration, visibility=5){
-    var pothole = acceleration > 5.0;
-    var rough = acceleration > 3.0;
-    var risk = 0;
-    if(pothole) risk += 50;
-    if(rough) risk += 30;
-    if(visibility < 4) risk += 20;
-    return {risk: Math.round(risk), pothole: pothole, rough: rough};
-  }
-
-  function pushToFirebase(payload){
-    ref.set(payload).then(function(){ 
-      document.getElementById('status').innerText = "Last pushed: " + (payload.timestamp||new Date().toISOString());
-    }).catch(function(e){
-      document.getElementById('status').innerText = "Push error: " + e;
-    });
-  }
-
-  // ---------- UI controls ----------
-  document.getElementById('reportBtn').addEventListener('click', function(){
-    if(!navigator.geolocation){ alert("Geolocation not supported"); return; }
-    document.getElementById('status').innerText = "Getting current GPS...";
-    navigator.geolocation.getCurrentPosition(function(pos){
-      var lat = pos.coords.latitude;
-      var lon = pos.coords.longitude;
-      var ts = new Date().toISOString();
-      var acc = 0;
-      var vis = 5;
-      var r = computeRisk(acc, vis);
-      var payload = {
-        lat: lat, lon: lon, acc: acc, pothole: r.pothole, rough: r.rough,
-        visibility: vis, risk_score: r.risk, timestamp: ts
-      };
-      pushToFirebase(payload);
-    }, function(err){
-      alert("GPS error: " + err.message);
-      document.getElementById('status').innerText = "GPS error";
-    }, { enableHighAccuracy:true, maximumAge:2000, timeout:8000 });
+  // custom marker icon
+  const greenIcon = L.divIcon({
+    html: `<div style="width:20px;height:20px;border-radius:50%;background:#16a34a;border:3px solid rgba(0,0,0,0.12)"></div>`,
+    className: ''
   });
 
-  // ---------- sensors ----------
-  var motionHandler = null;
-  var lastAccel = 0;
-  var sensorInterval = null;
+  let liveMarker = null;
+  let lastCoords = null;
+  let lastTs = null;
+  let pollHandle = null;
 
-  async function startSensors(){
-    // request motion permission on iOS
-    try {
-      if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-        let perm = await DeviceMotionEvent.requestPermission();
-        if (perm !== 'granted') {
-          alert('Motion permission denied. Accelerometer will not be available.');
+  // Update UI from DB JSON object
+  function updateUI(obj) {
+    if(!obj) return;
+    // object fields: lat, lon, acc, pothole, rough, visibility, risk_score, timestamp
+    const lat = obj.lat || obj.latitude || obj.Lat || obj.Latitude;
+    const lon = obj.lon || obj.longitude || obj.Lon || obj.Longitude;
+    const acc = obj.acc ?? obj.acceleration ?? 0;
+    const pothole = (obj.pothole === true || obj.pothole === "true");
+    const rough = (obj.rough === true || obj.rough === "true");
+    const vis = obj.visibility ?? obj.vis ?? 5;
+    const risk = obj.risk_score ?? obj.risk ?? 0;
+    let ts = obj.timestamp ?? obj.ts ?? '';
+
+    // safe normalization for display
+    el('acc').innerText = safeNumber(Number(acc).toFixed(2));
+    el('pothole').innerText = yesNo(pothole);
+    el('rough').innerText = yesNo(rough);
+    el('vis').innerText = safeNumber(vis);
+    el('ts').innerText = ts || '—';
+    el('lastPushed').innerText = 'Last pushed: ' + (ts || '—');
+    el('latlon').innerText = (lat && lon) ? `${Number(lat).toFixed(6)} , ${Number(lon).toFixed(6)}` : '—';
+    el('riskBadge').innerHTML = riskBadgeEl(risk);
+
+    // summary small text
+    el('summary-risk').innerText = risk + ' (0–40 low, 41–70 med, 71+ high)';
+    el('summary-acc').innerText = `Acceleration (m/s²): ${Number(acc).toFixed(2)} — higher indicates bump`;
+    el('summary-pothole-val').innerText = yesNo(pothole);
+    el('summary-rough-val').innerText = yesNo(rough);
+    el('summary-vis').innerText = `${vis} (1 low — 5 good)`;
+
+    // move marker if coords present & changed significantly
+    if(lat && lon) {
+      const newCoords = [Number(lat), Number(lon)];
+      // if no marker yet -> add and optionally center
+      if(!liveMarker) {
+        liveMarker = L.marker(newCoords, { icon: greenIcon }).addTo(map);
+        liveMarker.bindPopup(`Risk: ${risk} • Acc: ${Number(acc).toFixed(2)}`).openPopup();
+      } else {
+        const dist = lastCoords ? map.distance(lastCoords, newCoords) : 9999;
+        // only update marker if moved more than 5 meters to avoid jitter
+        if(!lastCoords || dist > 5) {
+          liveMarker.setLatLng(newCoords);
+          // update popup content
+          liveMarker.setPopupContent(`Risk: ${risk} • Acc: ${Number(acc).toFixed(2)}`);
         }
       }
-    } catch(e){
-      console.log('DeviceMotion request error', e);
+      lastCoords = newCoords;
     }
-
-    if(!navigator.geolocation) { alert("Geolocation not supported"); return; }
-
-    document.getElementById('startSensorsBtn').style.display = 'none';
-    document.getElementById('stopSensorsBtn').style.display = 'inline-block';
-    document.getElementById('status').innerText = "Sensors started. Capturing location + acceleration.";
-
-    motionHandler = function(ev){
-      var a = ev.acceleration || ev.accelerationIncludingGravity || {x:0,y:0,z:0};
-      var ax = a.x || 0, ay = a.y || 0, az = a.z || 0;
-      lastAccel = Math.sqrt(ax*ax + ay*ay + az*az);
-    };
-    window.addEventListener('devicemotion', motionHandler);
-
-    sensorInterval = setInterval(function(){
-      navigator.geolocation.getCurrentPosition(function(pos){
-        var lat = pos.coords.latitude;
-        var lon = pos.coords.longitude;
-        var ts = new Date().toISOString();
-        var acc = Math.round(lastAccel * 10)/10;
-        var vis = 5;
-        var r = computeRisk(acc, vis);
-        var payload = { lat:lat, lon:lon, acc:acc, pothole:r.pothole, rough:r.rough, visibility:vis, risk_score:r.risk, timestamp:ts };
-        pushToFirebase(payload);
-      }, function(err){
-        console.warn("GPS error while running sensors:", err);
-        document.getElementById('status').innerText = "GPS error while sensors running: " + err.message;
-      }, { enableHighAccuracy:true, maximumAge:1000, timeout:5000 });
-    }, 1000);
   }
 
-  function stopSensors(){
-    if(motionHandler) window.removeEventListener('devicemotion', motionHandler);
-    if(sensorInterval){ clearInterval(sensorInterval); sensorInterval = null; }
-    document.getElementById('startSensorsBtn').style.display = 'inline-block';
-    document.getElementById('stopSensorsBtn').style.display = 'none';
-    document.getElementById('status').innerText = "Sensors stopped.";
+  // fetch DB (GET)
+  async function fetchLive() {
+    try {
+      const url = `${DATABASE_URL}/${NODE}.json?` + new Date().getTime(); // cache-bust
+      const r = await fetch(url);
+      if(!r.ok) {
+        // show status but don't break
+        el('mapStatus').innerText = `DB read error ${r.status}`;
+        return;
+      }
+      const json = await r.json();
+      updateUI(json);
+      el('mapStatus').innerText = 'Live';
+    } catch(err) {
+      console.error('fetchLive err', err);
+      el('mapStatus').innerText = 'Offline';
+    }
   }
 
-  document.getElementById('startSensorsBtn').addEventListener('click', startSensors);
-  document.getElementById('stopSensorsBtn').addEventListener('click', stopSensors);
+  // start/stop polling
+  function startPolling(){
+    if(pollHandle) return;
+    fetchLive();
+    pollHandle = setInterval(fetchLive, POLL_MS);
+  }
+  function stopPolling(){
+    if(pollHandle) { clearInterval(pollHandle); pollHandle = null; }
+  }
 
-  // center button
-  document.getElementById('centerBtn').addEventListener('click', function(){
-    if(marker) map.setView(marker.getLatLng(), 17);
+  // center map button
+  el('centerBtn').addEventListener('click', () => {
+    if(lastCoords) {
+      map.setView(lastCoords, 16, { animate:true });
+      if(liveMarker) liveMarker.openPopup();
+    } else {
+      alert('No location yet.');
+    }
   });
 
+  // report my location -> uses browser geolocation and PATCH to DB (works if DB rules allow)
+  el('reportBtn').addEventListener('click', () => {
+    if(!navigator.geolocation) return alert('Geolocation not supported.');
+    navigator.geolocation.getCurrentPosition(async pos => {
+      const d = pos.coords;
+      const payload = {
+        lat: d.latitude,
+        lon: d.longitude,
+        timestamp: (new Date()).toISOString()
+      };
+      try {
+        const url = `${DATABASE_URL}/${NODE}.json`;
+        // patch (merge)
+        const r = await fetch(url, { method:'PATCH', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
+        if(!r.ok) alert('Failed to report: ' + r.status);
+        else { alert('Reported OK'); fetchLive(); }
+      } catch(e){ alert('Report failed: ' + e.message); }
+    }, err => alert('Geolocation error: ' + err.message), { enableHighAccuracy:true, maximumAge:2000, timeout:10000 });
+  });
+
+  // start live sensors: starts a timer that reads geolocation + simulated accel (if DeviceMotion available)
+  let sensorInterval = null;
+  let lastAccel = 0;
+  el('startBtn').addEventListener('click', async () => {
+    // request motion permission on iOS
+    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+      try {
+        const perm = await DeviceMotionEvent.requestPermission();
+        if (perm !== 'granted') {
+          console.log('device motion permission not granted');
+        }
+      } catch(e) { console.log('motion permission err', e); }
+    }
+
+    el('startBtn').disabled = true;
+    el('stopBtn').disabled = false;
+    el('mapStatus').innerText = 'Live (sensors)';
+    // device motion listener (if supported)
+    function motionHandler(ev){
+      try{
+        const ax = ev.accelerationIncludingGravity?.x ?? 0;
+        const ay = ev.accelerationIncludingGravity?.y ?? 0;
+        const az = ev.accelerationIncludingGravity?.z ?? 0;
+        const mag = Math.sqrt(ax*ax + ay*ay + az*az);
+        lastAccel = Math.round(mag * 10) / 10;
+      } catch(e){}
+    }
+    window.addEventListener('devicemotion', motionHandler);
+
+    // interval: every 1.5s, get position and push to DB (PATCH)
+    sensorInterval = setInterval(async () => {
+      if(!navigator.geolocation) return;
+      navigator.geolocation.getCurrentPosition(async pos => {
+        const d = pos.coords;
+        const payload = {
+          lat: d.latitude,
+          lon: d.longitude,
+          acc: lastAccel,
+          visibility: 5,
+          pothole:false,
+          rough:false,
+          risk_score:0,
+          timestamp: (new Date()).toISOString()
+        };
+        try {
+          const url = `${DATABASE_URL}/${NODE}.json`;
+          const r = await fetch(url, { method:'PATCH', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
+          if(!r.ok) console.warn('push failed', r.status);
+          // refresh UI quickly
+          fetchLive();
+        } catch(e) {
+          console.warn('push err', e);
+        }
+      }, err => console.warn('geo err', err), { enableHighAccuracy:true, maximumAge:1000, timeout:8000 });
+    }, 1500);
+
+    // ensure polling also runs
+    startPolling();
+  });
+
+  el('stopBtn').addEventListener('click', () => {
+    el('startBtn').disabled = false;
+    el('stopBtn').disabled = true;
+    if(sensorInterval) { clearInterval(sensorInterval); sensorInterval = null; }
+    window.removeEventListener('devicemotion', ()=>{});
+    el('mapStatus').innerText = 'Stopped';
+  });
+
+  // start polling immediately
+  startPolling();
+
+  // first fetch now (and keep polling)
+  fetchLive();
   </script>
 </body>
 </html>
