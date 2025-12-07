@@ -1,388 +1,232 @@
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>RoadRiskLive — demo</title>
+  <title>RoadRiskLive — demo (test build)</title>
 
-  <!-- Leaflet CSS & JS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-sA+eP6qk0gh5Y0gG2G0bZf9e6Rkq6Q7p3yX0p6pPq0M=" crossorigin=""/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-XQoYMqMTK8LvdxXYG3n2ZYQ2EN5h3v2x7Z8A6M5m9g0=" crossorigin=""></script>
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
-    /* base */
-    :root {
-      --card-bg: #ffffff;
-      --muted: #6b7280;
-      --accent: #0b76ef;
-      --success: #16a34a;
-      --warning: #f59e0b;
-      --danger:  #ef4444;
-      --panel-radius: 12px;
+    :root{
+      --card:#ffffff;
+      --muted:#6b7280;
+      --accent:#0b76ef;
+      --success:#16a34a;
+      --panel-radius:12px;
     }
-    html,body{ height:100%; margin:0; font-family: Inter, system-ui, -apple-system, Roboto, "Helvetica Neue", Arial; background:#f6f7fb; color:#0f172a; }
-    .app { max-width:900px; margin:12px auto; padding:12px; }
-
-    /* header */
-    .header {
-      display:flex; gap:12px; align-items:center;
-    }
-    .brand {
-      display:flex; gap:12px; align-items:center;
-    }
-    .logo {
-      width:42px; height:42px; border-radius:10px;
-      display:grid; place-items:center; font-weight:700; color:white;
-      background: linear-gradient(135deg,#0b76ef,#06b6d4);
-      box-shadow: 0 6px 18px rgba(11,118,239,0.12);
-    }
-    .title { font-size:18px; font-weight:700; }
-    .subtitle { font-size:13px; color:var(--muted); margin-top:2px; }
-
-    /* map */
-    #map { width:100%; height:42vh; min-height:260px; border-radius:12px; overflow:hidden; margin-top:12px; box-shadow: 0 8px 20px rgba(2,6,23,0.06); }
-    .map-top-badge {
-      position: absolute; z-index: 1000; right: 18px; top: 22px;
-      background:rgba(255,255,255,0.95); border-radius:8px; padding:6px 10px;
-      box-shadow:0 6px 16px rgba(2,6,23,0.08); font-size:13px;
-    }
-
-    /* controls */
-    .controls { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; align-items:center; }
-    button { padding:10px 14px; border-radius:10px; border:1px solid #e6e9ef; background:white; cursor:pointer; font-weight:600; }
-    button:active{ transform:translateY(1px); }
-    .btn-primary { background: linear-gradient(90deg,#0b76ef,#06b6d4); color:white; border:none; box-shadow: 0 8px 18px rgba(11,118,239,0.12); }
-    .btn-ghost { background:transparent; color:var(--muted); border:1px dashed #e6e9ef; }
-
-    /* cards */
-    .row { display:flex; gap:14px; margin-top:14px; flex-wrap:wrap; }
-    .data-card{
-      flex:1 1 320px;
-      background:var(--card-bg);
-      padding:14px; border-radius:var(--panel-radius);
-      box-shadow:0 8px 24px rgba(2,6,23,0.06);
-      border-left:6px solid var(--accent);
-    }
-    .section-title{ font-size:14px; font-weight:700; margin-bottom:8px; }
-    .muted { color:var(--muted); font-size:13px; margin-bottom:8px; }
-
-    /* list */
-    .stat { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #f1f3f6; align-items:center; }
-    .stat:last-child{ border-bottom:0; }
-    .stat-key{ color:#374151; font-weight:600; }
-    .stat-value{ color:#111827; font-weight:700; }
-
-    /* pill/badge */
-    .badge { padding:6px 8px; border-radius:999px; font-weight:700; color:white; font-size:13px; display:inline-block; }
-    .badge.low{ background:var(--success); }
-    .badge.medium{ background:var(--warning); color:#111827; }
-    .badge.high{ background:var(--danger); }
-
-    /* summary table */
-    table.summary{ width:100%; border-collapse:collapse; margin-top:6px; font-size:14px; }
-    table.summary td, table.summary th { padding:8px 6px; border-bottom:1px solid #f3f4f6; }
-    table.summary th{ text-align:left; color:#374151; font-weight:700; font-size:13px; }
-    table.summary td{ color:#111827; }
-
-    /* tiny helpers */
-    .icon { margin-right:8px; }
-    .small-muted { font-size:13px; color:var(--muted); }
-    .center { text-align:center; }
-    @media (max-width:520px){
-      .data-card{ flex-basis:100%; }
-    }
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, Roboto, "Helvetica Neue", Arial;}
+    .app{max-width:920px;margin:12px auto;padding:12px;}
+    header{display:flex;align-items:center;gap:12px}
+    .logo{width:48px;height:48px;border-radius:10px;background:linear-gradient(135deg,#2DD4BF,#3B82F6);display:flex;align-items:center;justify-content:center;color:white;font-weight:700}
+    h1{margin:0;font-size:18px}
+    #map{height:170px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.08);overflow:hidden}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;padding:12px 0}
+    button{padding:10px 14px;border-radius:12px;border:1px solid #e6e6e6;background:#fff;cursor:pointer}
+    .btn-primary{background:linear-gradient(90deg,#06b6d4,#3b82f6);color:white;border:0}
+    .panel{background:var(--card);border-radius:var(--panel-radius);padding:14px;margin-top:14px;box-shadow:0 6px 18px rgba(0,0,0,.04)}
+    .live-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px dashed #eee;align-items:center}
+    .live-row:last-child{border-bottom:0}
+    .label{color:var(--muted)}
+    .value{font-weight:700}
+    .summary{margin-top:12px}
+    .summary table{width:100%;border-collapse:collapse}
+    .summary th,.summary td{padding:8px;text-align:left;border-bottom:1px solid #f0f0f0}
+    .small{font-size:13px;color:var(--muted)}
+    .status{margin-top:8px;color:var(--muted);font-weight:600}
+    .badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#f3f4f6;font-size:12px}
+    /* mobile friendly */
+    @media(min-width:900px){ #map{height:300px} }
   </style>
 </head>
 <body>
   <div class="app">
-    <div class="header">
-      <div class="brand">
-        <div class="logo">R</div>
-        <div>
-          <div class="title">RoadRiskLive</div>
-          <div class="subtitle">Realtime road condition & risk monitoring</div>
-        </div>
+    <header>
+      <div class="logo">R</div>
+      <div>
+        <h1>RoadRiskLive</h1>
+        <div class="small">Realtime road condition & risk monitoring — demo</div>
       </div>
-    </div>
+    </header>
 
-    <div id="map"></div>
-
-    <div class="map-top-badge small-muted" id="mapBadge">Status: <span id="mapStatus">Idle</span></div>
+    <div id="map" aria-hidden="false"></div>
 
     <div class="controls">
       <button id="reportBtn">📍 Report my location</button>
       <button id="startBtn" class="btn-primary">▶️ Start live sensors</button>
       <button id="stopBtn" disabled>⏹ Stop sensors</button>
-      <button id="centerBtn" class="btn-ghost">📌 Center map</button>
+      <button id="centerBtn">📌 Center map</button>
     </div>
 
-    <div class="row">
-      <!-- Live data card -->
-      <div class="data-card" id="liveCard">
-        <div class="section-title">Live data</div>
-        <div class="muted">Realtime • Firebase</div>
+    <div class="panel">
+      <div class="small">Live data · Local demo</div>
+      <div id="lastPushed" class="status">Last pushed: —</div>
 
-        <div id="lastPushed" class="small-muted">Last pushed: —</div>
-
-        <div style="margin-top:10px">
-          <div class="stat"><div class="stat-key">Risk Score</div><div class="stat-value" id="riskBadge">—</div></div>
-          <div class="stat"><div class="stat-key">Acceleration</div><div class="stat-value" id="acc">—</div></div>
-          <div class="stat"><div class="stat-key">Pothole</div><div class="stat-value" id="pothole">—</div></div>
-          <div class="stat"><div class="stat-key">Rough</div><div class="stat-value" id="rough">—</div></div>
-          <div class="stat"><div class="stat-key">Visibility</div><div class="stat-value" id="vis">—</div></div>
-          <div class="stat"><div class="stat-key">Timestamp</div><div class="stat-value" id="ts">—</div></div>
-          <div class="stat"><div class="stat-key">Lat / Lon</div><div class="stat-value small-muted" id="latlon">—</div></div>
-        </div>
+      <div style="margin-top:12px">
+        <div class="live-row"><div class="label">Risk Score</div><div id="risk" class="value">—</div></div>
+        <div class="live-row"><div class="label">Acceleration</div><div id="acc" class="value">—</div></div>
+        <div class="live-row"><div class="label">Pothole</div><div id="pothole" class="value">—</div></div>
+        <div class="live-row"><div class="label">Rough</div><div id="rough" class="value">—</div></div>
+        <div class="live-row"><div class="label">Visibility</div><div id="vis" class="value">—</div></div>
+        <div class="live-row"><div class="label">Timestamp</div><div id="ts" class="value">—</div></div>
+        <div class="live-row"><div class="label">Lat</div><div id="lat" class="value">—</div></div>
+        <div class="live-row"><div class="label">Lon</div><div id="lon" class="value">—</div></div>
       </div>
 
-      <!-- Summary table card -->
-      <div class="data-card" id="summaryCard">
-        <div class="section-title">Summary</div>
-        <div class="muted">Quick interpretation</div>
-
-        <table class="summary">
-          <thead>
-            <tr><th>Metric</th><th class="center">Meaning / Notes</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>Risk Score</td><td class="center" id="summary-risk">0 = safe</td></tr>
-            <tr><td>Acceleration</td><td class="center" id="summary-acc">High ≈ bump/impact</td></tr>
-            <tr><td>Pothole</td><td class="center" id="summary-pothole">Counts potholes reported: <span id="summary-pothole-val">No</span></td></tr>
-            <tr><td>Rough</td><td class="center" id="summary-rough">Surface roughness flag: <span id="summary-rough-val">No</span></td></tr>
-            <tr><td>Visibility</td><td class="center" id="summary-vis">1 (low) → 5 (good)</td></tr>
-          </tbody>
+      <div class="summary">
+        <div class="small">Quick interpretation</div>
+        <table>
+          <tr data-metric="Risk"><th>Risk Score</th><td class="value">0 = safe</td></tr>
+          <tr data-metric="Acceleration"><th>Acceleration</th><td class="value">High ≈ bump/impact</td></tr>
+          <tr data-metric="Pothole"><th>Pothole</th><td class="value">Counts potholes reported: No</td></tr>
+          <tr data-metric="Rough"><th>Rough</th><td class="value">Surface roughness flag: No</td></tr>
+          <tr data-metric="Visibility"><th>Visibility</th><td class="value">1 (low) → 5 (good)</td></tr>
         </table>
-
-        <div style="margin-top:12px; font-size:13px;" class="small-muted">
-          Click <strong>Report my location</strong> to update DB with your current device GPS (works only if DB allows writes).
-        </div>
       </div>
     </div>
   </div>
 
   <script>
-  /******************************************************************
-   *  RoadRiskLive front-end
-   *  - Polls Firebase Realtime DB node and updates map/UI
-   *  - Replace DATABASE_URL if yours differs
-   ******************************************************************/
-  const DATABASE_URL = 'https://roadrisklive-default-rtdb.asia-southeast1.firebasedatabase.app';
-  const NODE = 'live_area'; // keep as in your project
-  const POLL_MS = 2000;     // poll DB every 2s
+  /* ---------- SIMPLE DEMO SCRIPT ----------
+     Purpose: give you a file where map + buttons definitely work.
+     This does NOT push to your DB. It logs actions clearly into console.
+  */
 
-  // helpers
+  console.log('[RR] demo script loaded');
+
   const el = id => document.getElementById(id);
-  function yesNo(v){ return (v === true || v === "true" || v === "True") ? 'Yes' : 'No'; }
-  function safeNumber(v){ return (v === undefined || v === null || v === '') ? '—' : v; }
-  function riskBadgeEl(score){
-    const n = Number(score);
-    if(isNaN(n)) return '<span style="color:#6b7280">—</span>';
-    if(n >= 71) return `<span class="badge high">High (${n})</span>`;
-    if(n >= 41) return `<span class="badge medium">Medium (${n})</span>`;
-    return `<span class="badge low">Low (${n})</span>`;
-  }
 
-  // Map init
-  const map = L.map('map', { zoomControl: false }).setView([28.45, 77.585], 13);
+  // --- init map & marker
+  let map = L.map('map', { zoomControl: true }).setView([28.45006, 77.58585], 15);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19, attribution: '©️ OpenStreetMap'
   }).addTo(map);
+  let marker = L.circleMarker([28.45006, 77.58585], { radius:10, color: '#168a46', fillColor:'#168a46', fillOpacity:1 }).addTo(map);
 
-  // custom marker icon
-  const greenIcon = L.divIcon({
-    html: `<div style="width:20px;height:20px;border-radius:50%;background:#16a34a;border:3px solid rgba(0,0,0,0.12)"></div>`,
-    className: ''
-  });
+  // UI helpers
+  const setText = (id, t) => { const e = el(id); if(e) e.innerText = t; };
 
-  let liveMarker = null;
-  let lastCoords = null;
-  let lastTs = null;
-  let pollHandle = null;
+  // sensor handling
+  let motionHandler = null;
+  let sensorsRunning = false;
 
-  // Update UI from DB JSON object
-  function updateUI(obj) {
-    if(!obj) return;
-    // object fields: lat, lon, acc, pothole, rough, visibility, risk_score, timestamp
-    const lat = obj.lat || obj.latitude || obj.Lat || obj.Latitude;
-    const lon = obj.lon || obj.longitude || obj.Lon || obj.Longitude;
-    const acc = obj.acc ?? obj.acceleration ?? 0;
-    const pothole = (obj.pothole === true || obj.pothole === "true");
-    const rough = (obj.rough === true || obj.rough === "true");
-    const vis = obj.visibility ?? obj.vis ?? 5;
-    const risk = obj.risk_score ?? obj.risk ?? 0;
-    let ts = obj.timestamp ?? obj.ts ?? '';
-
-    // safe normalization for display
-    el('acc').innerText = safeNumber(Number(acc).toFixed(2));
-    el('pothole').innerText = yesNo(pothole);
-    el('rough').innerText = yesNo(rough);
-    el('vis').innerText = safeNumber(vis);
-    el('ts').innerText = ts || '—';
-    el('lastPushed').innerText = 'Last pushed: ' + (ts || '—');
-    el('latlon').innerText = (lat && lon) ? `${Number(lat).toFixed(6)} , ${Number(lon).toFixed(6)}` : '—';
-    el('riskBadge').innerHTML = riskBadgeEl(risk);
-
-    // summary small text
-    el('summary-risk').innerText = risk + ' (0–40 low, 41–70 med, 71+ high)';
-    el('summary-acc').innerText = `Acceleration (m/s²): ${Number(acc).toFixed(2)} — higher indicates bump`;
-    el('summary-pothole-val').innerText = yesNo(pothole);
-    el('summary-rough-val').innerText = yesNo(rough);
-    el('summary-vis').innerText = `${vis} (1 low — 5 good)`;
-
-    // move marker if coords present & changed significantly
-    if(lat && lon) {
-      const newCoords = [Number(lat), Number(lon)];
-      // if no marker yet -> add and optionally center
-      if(!liveMarker) {
-        liveMarker = L.marker(newCoords, { icon: greenIcon }).addTo(map);
-        liveMarker.bindPopup(`Risk: ${risk} • Acc: ${Number(acc).toFixed(2)}`).openPopup();
-      } else {
-        const dist = lastCoords ? map.distance(lastCoords, newCoords) : 9999;
-        // only update marker if moved more than 5 meters to avoid jitter
-        if(!lastCoords || dist > 5) {
-          liveMarker.setLatLng(newCoords);
-          // update popup content
-          liveMarker.setPopupContent(`Risk: ${risk} • Acc: ${Number(acc).toFixed(2)}`);
-        }
-      }
-      lastCoords = newCoords;
-    }
+  function setButtonsRunning(r){
+    sensorsRunning = r;
+    el('startBtn').disabled = r;
+    el('stopBtn').disabled = !r;
   }
 
-  // fetch DB (GET)
-  async function fetchLive() {
-    try {
-      const url = `${DATABASE_URL}/${NODE}.json?` + new Date().getTime(); // cache-bust
-      const r = await fetch(url);
-      if(!r.ok) {
-        // show status but don't break
-        el('mapStatus').innerText = `DB read error ${r.status}`;
-        return;
-      }
-      const json = await r.json();
-      updateUI(json);
-      el('mapStatus').innerText = 'Live';
-    } catch(err) {
-      console.error('fetchLive err', err);
-      el('mapStatus').innerText = 'Offline';
-    }
+  // utility: set multiple UI fields from a payload
+  function updateUIFromPayload(p){
+    setText('risk', p.risk ?? '—');
+    setText('acc', (p.acceleration !== undefined) ? String(p.acceleration) : '—');
+    setText('pothole', p.pothole ? 'Yes' : 'No');
+    setText('rough', p.rough ? 'Yes' : 'No');
+    setText('vis', p.visibility ?? '—');
+    setText('ts', p.timestamp ?? '—');
+    setText('lat', (p.lat !== undefined) ? p.lat.toFixed(6) : '—');
+    setText('lon', (p.lon !== undefined) ? p.lon.toFixed(6) : '—');
   }
 
-  // start/stop polling
-  function startPolling(){
-    if(pollHandle) return;
-    fetchLive();
-    pollHandle = setInterval(fetchLive, POLL_MS);
-  }
-  function stopPolling(){
-    if(pollHandle) { clearInterval(pollHandle); pollHandle = null; }
-  }
+  // Start live sensors
+  async function startLiveSensors(){
+    console.log('[RR] startLiveSensors() called');
+    setButtonsRunning(true);
+    setText('lastPushed','Getting sensors...');
 
-  // center map button
-  el('centerBtn').addEventListener('click', () => {
-    if(lastCoords) {
-      map.setView(lastCoords, 16, { animate:true });
-      if(liveMarker) liveMarker.openPopup();
-    } else {
-      alert('No location yet.');
-    }
-  });
-
-  // report my location -> uses browser geolocation and PATCH to DB (works if DB rules allow)
-  el('reportBtn').addEventListener('click', () => {
-    if(!navigator.geolocation) return alert('Geolocation not supported.');
-    navigator.geolocation.getCurrentPosition(async pos => {
-      const d = pos.coords;
-      const payload = {
-        lat: d.latitude,
-        lon: d.longitude,
-        timestamp: (new Date()).toISOString()
-      };
-      try {
-        const url = `${DATABASE_URL}/${NODE}.json`;
-        // patch (merge)
-        const r = await fetch(url, { method:'PATCH', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
-        if(!r.ok) alert('Failed to report: ' + r.status);
-        else { alert('Reported OK'); fetchLive(); }
-      } catch(e){ alert('Report failed: ' + e.message); }
-    }, err => alert('Geolocation error: ' + err.message), { enableHighAccuracy:true, maximumAge:2000, timeout:10000 });
-  });
-
-  // start live sensors: starts a timer that reads geolocation + simulated accel (if DeviceMotion available)
-  let sensorInterval = null;
-  let lastAccel = 0;
-  el('startBtn').addEventListener('click', async () => {
-    // request motion permission on iOS
+    // iOS device motion permission (works only if user gesture)
     if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
       try {
         const perm = await DeviceMotionEvent.requestPermission();
+        console.log('[RR] DeviceMotion permission:', perm);
         if (perm !== 'granted') {
-          console.log('device motion permission not granted');
+          alert('Motion permission not granted — motion data will be disabled.');
         }
-      } catch(e) { console.log('motion permission err', e); }
+      } catch (err) {
+        console.warn('[RR] DeviceMotion request error', err);
+      }
     }
 
-    el('startBtn').disabled = true;
-    el('stopBtn').disabled = false;
-    el('mapStatus').innerText = 'Live (sensors)';
-    // device motion listener (if supported)
-    function motionHandler(ev){
-      try{
-        const ax = ev.accelerationIncludingGravity?.x ?? 0;
-        const ay = ev.accelerationIncludingGravity?.y ?? 0;
-        const az = ev.accelerationIncludingGravity?.z ?? 0;
-        const mag = Math.sqrt(ax*ax + ay*ay + az*az);
-        lastAccel = Math.round(mag * 10) / 10;
-      } catch(e){}
-    }
+    // attach motion handler (best-effort)
+    motionHandler = (ev) => {
+      try {
+        const ax = ev.acceleration?.x ?? ev.accelerationIncludingGravity?.x ?? 0;
+        const ay = ev.acceleration?.y ?? ev.accelerationIncludingGravity?.y ?? 0;
+        const az = ev.acceleration?.z ?? ev.accelerationIncludingGravity?.z ?? 0;
+        const acc = Math.sqrt(ax*ax + ay*ay + az*az);
+        // update only acceleration field and interpretation table
+        updateUIFromPayload({ acceleration: Number(acc.toFixed(2)) });
+        console.log('[RR] motion acc=', acc);
+      } catch(e){ console.warn('[RR] motion handler error', e); }
+    };
     window.addEventListener('devicemotion', motionHandler);
 
-    // interval: every 1.5s, get position and push to DB (PATCH)
-    sensorInterval = setInterval(async () => {
-      if(!navigator.geolocation) return;
-      navigator.geolocation.getCurrentPosition(async pos => {
-        const d = pos.coords;
-        const payload = {
-          lat: d.latitude,
-          lon: d.longitude,
-          acc: lastAccel,
-          visibility: 5,
-          pothole:false,
-          rough:false,
-          risk_score:0,
-          timestamp: (new Date()).toISOString()
-        };
-        try {
-          const url = `${DATABASE_URL}/${NODE}.json`;
-          const r = await fetch(url, { method:'PATCH', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
-          if(!r.ok) console.warn('push failed', r.status);
-          // refresh UI quickly
-          fetchLive();
-        } catch(e) {
-          console.warn('push err', e);
-        }
-      }, err => console.warn('geo err', err), { enableHighAccuracy:true, maximumAge:1000, timeout:8000 });
-    }, 1500);
+    // get geolocation once and update UI + marker
+    if (!navigator.geolocation) {
+      alert('Geolocation not supported in this browser');
+      setText('lastPushed','No geolocation');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const lat = pos.coords.latitude, lon = pos.coords.longitude;
+      console.log('[RR] got geo', lat, lon);
+      marker.setLatLng([lat,lon]);
+      map.setView([lat,lon], 16);
+      const payload = {
+        timestamp: new Date().toISOString(),
+        lat, lon,
+        acceleration: 0,
+        pothole:false, rough:false, visibility:5, risk:0
+      };
+      updateUIFromPayload(payload);
+      setText('lastPushed','Simulated push at ' + payload.timestamp);
+    }, (err) => {
+      console.warn('[RR] geolocation error', err);
+      setText('lastPushed','Geo error: '+ (err.message||err.code));
+    }, { enableHighAccuracy:true, timeout:10000, maximumAge:10000 });
+  }
 
-    // ensure polling also runs
-    startPolling();
-  });
+  function stopLiveSensors(){
+    console.log('[RR] stopLiveSensors() called');
+    if (motionHandler) window.removeEventListener('devicemotion', motionHandler);
+    motionHandler = null;
+    setButtonsRunning(false);
+    setText('lastPushed','Stopped');
+  }
 
-  el('stopBtn').addEventListener('click', () => {
-    el('startBtn').disabled = false;
-    el('stopBtn').disabled = true;
-    if(sensorInterval) { clearInterval(sensorInterval); sensorInterval = null; }
-    window.removeEventListener('devicemotion', ()=>{});
-    el('mapStatus').innerText = 'Stopped';
-  });
+  function reportMyLocation(){
+    console.log('[RR] reportMyLocation() called');
+    if (!navigator.geolocation) { alert('No geolocation'); return; }
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const lat = pos.coords.latitude, lon = pos.coords.longitude;
+      const payload = { timestamp: new Date().toISOString(), lat, lon };
+      // show simple UI update (no DB in this demo)
+      marker.setLatLng([lat,lon]);
+      map.setView([lat,lon], 16);
+      updateUIFromPayload({ timestamp: payload.timestamp, lat, lon });
+      setText('lastPushed','Reported location: ' + payload.timestamp);
+      console.log('[RR] reported payload (demo only)', payload);
+    }, (err) => { console.warn('[RR] report geo error', err); alert('Location failed: ' + (err.message||err.code)); }, { enableHighAccuracy:true });
+  }
 
-  // start polling immediately
-  startPolling();
+  function centerMap(){
+    console.log('[RR] centerMap()');
+    const lat = parseFloat(el('lat').innerText) || 28.45006;
+    const lon = parseFloat(el('lon').innerText) || 77.58585;
+    map.setView([lat,lon], 16);
+  }
 
-  // first fetch now (and keep polling)
-  fetchLive();
+  // wire buttons
+  el('startBtn').addEventListener('click', startLiveSensors);
+  el('stopBtn').addEventListener('click', stopLiveSensors);
+  el('reportBtn').addEventListener('click', reportMyLocation);
+  el('centerBtn').addEventListener('click', centerMap);
+
+  // initial UI
+  setText('lastPushed','—');
+  console.log('[RR] demo UI wired — ready.');
   </script>
 </body>
 </html>
